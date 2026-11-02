@@ -1,0 +1,124 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+Properties localProperties = new Properties()
+Properties gradleProperties = new Properties()
+def lp = project.rootProject.file('local.Properties')
+def gp = project.rootProject.file('gradle.properties')
+if (!lp.exists()) {
+    // qa-app-shell에서 루트에 local.properties가 없을 수 있으므로 상위 폴더를 FallBack
+    lp = new File(project.rootProject.projectDir, '../local.properties')
+}
+if (lp.exists()) {
+    localProperties.load(lp.newDataInputStream())
+}
+if (!gp.exists()) {
+    // qa-app-shell에서 루트에 gradle.properties가 없을 수 있으므로 상위 폴더를 FallBack
+    gp = new File(project.rootProject.projectDir, '../gradle.properties')
+}
+if (gp.exists()) {
+    gradleProperties.load(gp.newDataInputStream())
+}
+ext.sdkVersionMajor = (gradleProperties["sdkVersionMajor"] ?: "1")
+ext.sdkVersionMinor = (gradleProperties["sdkVersionMinor"] ?: "0")
+ext.sdkVersionPatch = (gradleProperties["sdkVersionPatch"] ?: "0")
+ext.sdkVersionCode = Integer.valueOf((Integer.parseInt(sdkVersionMajor)*10000) + (Integer.parseInt(sdkVersionMinor)*100) + Integer.parseInt(sdkVersionPatch))
+ext.sdkVersion = "${sdkVersionMajor}.${sdkVersionMinor}.${sdkVersionPatch}"
+
+android {
+    namespace 'kr.co.playbridge.sdk.sample'
+    compileSdk 36
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    flavorDimensions "default"
+
+    productFlavors {
+        real {
+            dimension "default"
+            applicationId "kr.co.playbridge.sdk.sample"
+            minSdk 25
+            targetSdk 36
+            versionCode sdkVersionCode
+            versionName "${sdkVersion}"
+            testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        }
+
+        uat {
+            dimension "default"
+            applicationId "kr.co.playbridge.sdk.sample"
+            minSdk 25
+            targetSdk 36
+            versionCode sdkVersionCode
+            versionName "${sdkVersion}"
+            testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        }
+    }
+
+    def hasSigning = localProperties["keystore"] && localProperties["keystore_pass"] && localProperties["keystore_alias"] && localProperties["key_pass"] && file(localProperties["keystore"]).exists()
+
+    if (hasSigning) {
+        signingConfigs{
+            release{
+                storeFile file(localProperties["keystore"])
+                storePassword localProperties["keystore_pass"]
+                keyAlias localProperties["keystore_alias"]
+                keyPassword localProperties["key_pass"]
+            }
+        }
+    }
+
+    defaultConfig {
+        applicationId "kr.co.playbridge.sdk.sample"
+        minSdk 25
+        targetSdk 36
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // 빌드타입은 2가지로, 디버그 모드일 때와 릴리즈 모드일 때 구분
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (hasSigning) {
+                signingConfig signingConfigs.release
+            }
+        }
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules-debug.pro'
+        }
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.appcompat
+    implementation libs.material
+    implementation libs.androidx.activity
+    implementation libs.androidx.constraintlayout
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.junit
+    androidTestImplementation libs.androidx.espresso.core
+}
