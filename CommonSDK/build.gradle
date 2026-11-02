@@ -1,0 +1,106 @@
+plugins {
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.maven.publish)
+}
+
+Properties gradleProperties = new Properties()
+def gp = project.rootProject.file('gradle.properties')
+if (!gp.exists()) {
+    // qa-app-shell에서 루트에 gradle.properties가 없을 수 있으므로 상위 폴더를 FallBack
+    gp = new File(project.rootProject.projectDir, '../gradle.properties')
+}
+if (gp.exists()) {
+    gradleProperties.load(gp.newDataInputStream())
+}
+ext.sdkVersionMajor = (gradleProperties["sdkVersionMajor"] ?: "1")
+ext.sdkVersionMinor = (gradleProperties["sdkVersionMinor"] ?: "0")
+ext.sdkVersionPatch = (gradleProperties["sdkVersionPatch"] ?: "0")
+ext.sdkVersionCode = Integer.valueOf((Integer.parseInt(sdkVersionMajor)*10000) + (Integer.parseInt(sdkVersionMinor)*100) + Integer.parseInt(sdkVersionPatch))
+ext.sdkVersion = "${sdkVersionMajor}.${sdkVersionMinor}.${sdkVersionPatch}"
+
+android {
+    namespace 'kr.co.playbridge.commonsdk'
+    compileSdk 36
+
+    flavorDimensions "default"
+
+    //"Build Type 'release' contains custom BuildConfig fields, but the feature is disabled. 에러 해결을 위한 임시방편
+    //참고: https://daryeou.tistory.com/324
+    buildFeatures {
+        buildConfig = true
+    }
+
+    productFlavors {
+        real {
+            dimension "default"
+            minSdk 25
+            targetSdk 36
+            versionCode sdkVersionCode
+            versionName "${sdkVersion}"
+            multiDexEnabled true
+            testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+            consumerProguardFiles "consumer-rules.pro"
+            buildConfigField "String", "COMMON_SDK_VERSION", "\"${sdkVersion}\""
+        }
+
+        uat {
+            dimension "default"
+            minSdk 25
+            targetSdk 36
+            versionCode sdkVersionCode
+            versionName "${sdkVersion}"
+            multiDexEnabled false
+            testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+            consumerProguardFiles "consumer-rules.pro"
+            buildConfigField "String", "COMMON_SDK_VERSION", "\"${sdkVersion}\""
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules-debug.pro'
+        }
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+    }
+
+
+    defaultConfig {
+        minSdk 25
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.appcompat
+    implementation libs.material
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.junit
+    androidTestImplementation libs.androidx.espresso.core
+}
