@@ -22,7 +22,6 @@ internal class PlayBridgeBannerViewImpl(private val context: Context) {
             ?: throw IllegalArgumentException("context must be ViewModelStoreOwner (e.g. ComponentActivity)")
         adViewModel = ViewModelProvider(owner)[AdViewModel::class.java]
         adViewModel.getConfigs()
-        adViewModel.configDtoState.value = ConfigDto("", "")
         adViewModel.configDtoState.observe(context as LifecycleOwner) { configDto ->
             Log.e(TAG, configDto.toString())
         }
