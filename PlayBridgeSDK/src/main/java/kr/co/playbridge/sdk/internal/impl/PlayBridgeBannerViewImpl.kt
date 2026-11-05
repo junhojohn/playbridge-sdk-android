@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
+import kr.co.playbridge.sdk.internal.dto.ConfigDto
 import kr.co.playbridge.sdk.internal.viewmodels.AdViewModel
 
 internal class PlayBridgeBannerViewImpl(private val context: Context) {
@@ -21,7 +22,8 @@ internal class PlayBridgeBannerViewImpl(private val context: Context) {
             ?: throw IllegalArgumentException("context must be ViewModelStoreOwner (e.g. ComponentActivity)")
         adViewModel = ViewModelProvider(owner)[AdViewModel::class.java]
         adViewModel.getConfigs()
-        adViewModel._configDto.observe(context as LifecycleOwner) { configDto ->
+        adViewModel.configDtoState.value = ConfigDto("", "")
+        adViewModel.configDtoState.observe(context as LifecycleOwner) { configDto ->
             Log.e(TAG, configDto.toString())
         }
     }

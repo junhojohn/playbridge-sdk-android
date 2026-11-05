@@ -2,6 +2,7 @@ package kr.co.playbridge.sdk.internal.viewmodels
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import io.reactivex.rxjava3.disposables.CompositeDisposable
@@ -13,7 +14,10 @@ class AdViewModel : ViewModel() {
         private val TAG = AdViewModel::class.simpleName
     }
     private val adRepository = AdRepository()
-    val _configDto = MutableLiveData<ConfigDto>()
+    private val _configDto = MutableLiveData<ConfigDto>()
+
+    val configDtoState : LiveData<ConfigDto> = _configDto
+
     private var compositeDisposable = CompositeDisposable()
 
     @SuppressLint("CheckResult")
