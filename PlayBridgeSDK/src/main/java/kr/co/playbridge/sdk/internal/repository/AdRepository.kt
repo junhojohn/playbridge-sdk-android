@@ -6,6 +6,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import kr.co.playbridge.sdk.ads.PlayBridgeLogUtil
 import kr.co.playbridge.sdk.internal.dto.ConfigDto
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 
 class AdRepository {
 
@@ -13,7 +14,7 @@ class AdRepository {
         PlayBridgeLogUtil.d("selectConfigs()")
 
         return Observable
-            .interval(0L, 1000L, TimeUnit.MILLISECONDS)
+            .interval(0L, 20000L, TimeUnit.MILLISECONDS)
             .switchMap { t ->
                 Observable.just(
             ConfigDto("TestMedia$t", "TestPlacement$t")
