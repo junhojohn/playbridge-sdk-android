@@ -21,7 +21,8 @@
 #-renamesourcefileattribute SourceFile
 #================== Repackage 적용 시작 ==================
 # keep 대상이 아닌 클래스는 전부 이 패키지 하나로 모아서 a, b, c... 로 이름 변경
--repackageclasses 'kr.co.playbridge.obfuscated'
+# PlayBridgeSDK와 같은 패키지를 쓰면 a.class 등이 겹쳐 앱 빌드 시 Duplicate class 에러 발생 -> 모듈별로 분리
+-repackageclasses 'kr.co.playbridge.commonsdk.obfuscated'
 -allowaccessmodification
 #================== Repackage 적용 끝 ==================
 
