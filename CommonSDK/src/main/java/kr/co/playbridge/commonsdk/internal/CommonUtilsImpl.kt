@@ -3,8 +3,6 @@ package kr.co.playbridge.commonsdk.internal
 import android.content.Context
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.android.gms.appset.AppSet
-import com.google.android.gms.appset.AppSetIdInfo
-import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.gms.tasks.Tasks
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Single
