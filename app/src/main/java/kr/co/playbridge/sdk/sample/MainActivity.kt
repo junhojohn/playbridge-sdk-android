@@ -6,7 +6,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import kr.co.playbridge.sdk.ads.PlayBridgeAds
 import kr.co.playbridge.sdk.ads.PlayBridgeBannerView
+import kr.co.playbridge.sdk.ads.PlayBridgeOnInitCompleteListener
+import kr.co.playbridge.sdk.ads.PlayBridgeOnInitStatus
 import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
@@ -27,12 +30,13 @@ class MainActivity : AppCompatActivity() {
 
         playBridgeBannerView = PlayBridgeBannerView(this);
 
-        playBridgeBannerView.load()
-        playBridgeBannerView.show()
-
-        Log.e(TAG, UUID.randomUUID().toString())
-
-
+        PlayBridgeAds.init(this, object : PlayBridgeOnInitCompleteListener {
+            override fun onComplete(status: PlayBridgeOnInitStatus?) {
+                Log.e(TAG, "init finish with ${status?.statusCode} , ${status?.statusMessage} ")
+                playBridgeBannerView.load()
+                playBridgeBannerView.show()
+            }
+        })
     }
 
     override fun onDestroy() {

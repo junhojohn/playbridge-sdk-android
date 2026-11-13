@@ -2,13 +2,14 @@ package kr.co.playbridge.sdk.internal.impl
 
 import android.content.Context
 import android.util.Log
+import android.widget.LinearLayout
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
 import kr.co.playbridge.sdk.internal.dto.ConfigDto
 import kr.co.playbridge.sdk.internal.viewmodels.AdViewModel
 
-internal class PlayBridgeBannerViewImpl(private val context: Context) {
+internal class PlayBridgeBannerViewImpl(private val context: Context) : LinearLayout(context) {
 
     companion object {
         private const val TAG = "PlayBridgeBannerViewImpl"

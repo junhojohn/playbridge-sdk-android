@@ -58,4 +58,4 @@
 -keep public class kr.co.playbridge.sdk.ads.** {
     public *;
 }
-#================== AdWhale Mediation SDK Proguard for Release 적용 코드 끝 ==================
+#================== PlayBridge SDK Proguard for Release 적용 코드 끝 ==================
