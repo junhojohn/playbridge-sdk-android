@@ -6,7 +6,6 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import kr.co.playbridge.sdk.ads.PlayBridgeLogUtil
 import kr.co.playbridge.sdk.internal.dto.ConfigDto
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicLong
 
 class AdRepository {
 
