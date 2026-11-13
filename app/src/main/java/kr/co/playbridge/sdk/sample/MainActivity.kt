@@ -8,14 +8,13 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import kr.co.playbridge.sdk.ads.PlayBridgeAds
 import kr.co.playbridge.sdk.ads.PlayBridgeBannerView
+import kr.co.playbridge.sdk.ads.PlayBridgeLogUtil
 import kr.co.playbridge.sdk.ads.PlayBridgeOnInitCompleteListener
 import kr.co.playbridge.sdk.ads.PlayBridgeOnInitStatus
 import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
-    companion object {
-        private val TAG = MainActivity::class.simpleName
-    }
+
     private lateinit var playBridgeBannerView : PlayBridgeBannerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,11 +27,17 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        PlayBridgeLogUtil.setLogLevel(PlayBridgeLogUtil.Companion.LogLevel.Verbose)
+        PlayBridgeLogUtil.d("debug")
+        PlayBridgeLogUtil.e("error")
+        PlayBridgeLogUtil.w("warn")
+        PlayBridgeLogUtil.i("info")
+
         playBridgeBannerView = PlayBridgeBannerView(this);
 
         PlayBridgeAds.init(this, object : PlayBridgeOnInitCompleteListener {
             override fun onComplete(status: PlayBridgeOnInitStatus?) {
-                Log.e(TAG, "init finish with ${status?.statusCode} , ${status?.statusMessage} ")
+                PlayBridgeLogUtil.d("init finish with ${status?.statusCode} , ${status?.statusMessage} ")
                 playBridgeBannerView.load()
                 playBridgeBannerView.show()
             }

@@ -16,6 +16,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // PlayBridge SDK
+        maven {
+            url = uri("https://junhojohn.github.io/playbridge-sdk-android-maven/maven-repo")
+        }
     }
 }
 

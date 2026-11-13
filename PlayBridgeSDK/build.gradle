@@ -297,8 +297,8 @@ dependencies {
     } else {
         println "▶ useLocalProject(coreSdk): ${useLocalProject}"
         // 배포용: flavor별로 구분된 외부 의존성
-        realImplementation "kr.adwhale.sdk.core:adwhale-core-sdk:$coreSdkVersion"
-        uatImplementation  "net.adwhale.sdk.core:adwhale-core-sdk-uat:$coreSdkVersion"
+        realImplementation "kr.co.playbridge.sdk:playbridge-common-sdk:$sdkVersion"
+        uatImplementation  "kr.co.playbridge.sdk:playbridge-common-sdk-uat:$sdkVersion"
     }
 
     implementation libs.androidx.core.ktx

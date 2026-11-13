@@ -1,18 +1,16 @@
 package kr.co.playbridge.sdk.internal.viewmodels
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import kr.co.playbridge.sdk.ads.PlayBridgeLogUtil
 import kr.co.playbridge.sdk.internal.dto.ConfigDto
 import kr.co.playbridge.sdk.internal.repository.AdRepository
 
 class AdViewModel : ViewModel() {
-    companion object{
-        private val TAG = AdViewModel::class.simpleName
-    }
+
     private val adRepository = AdRepository()
     private val _configDto = MutableLiveData<ConfigDto>()
 
@@ -22,7 +20,7 @@ class AdViewModel : ViewModel() {
 
     @SuppressLint("CheckResult")
     fun getConfigs() {
-        Log.e(TAG, "$TAG.getConfigs()")
+        PlayBridgeLogUtil.d("getConfigs()")
         compositeDisposable.add(
             adRepository
             .selectConfigs()
@@ -38,7 +36,7 @@ class AdViewModel : ViewModel() {
     }
 
     fun disposeAll() {
-        Log.e(TAG, "$TAG.disposeAll()")
+        PlayBridgeLogUtil.e("disposeAll()")
         if(!compositeDisposable.isDisposed) {
             compositeDisposable.dispose()
         }
