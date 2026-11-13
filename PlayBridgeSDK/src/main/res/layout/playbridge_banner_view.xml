@@ -11,6 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
+        android:layout_marginLeft="10dp"
         android:text="CTA"/>
 
     <TextView
@@ -20,6 +21,15 @@
         android:text="This is Title"
         android:textSize="20dp"
         android:layout_toRightOf="@+id/btn_cta"/>
+
+    <TextView
+        android:id="@+id/tv_cnt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        android:textSize="30dp"
+        android:layout_marginRight="10dp"
+        android:layout_alignParentRight="true"/>
 
 
 </RelativeLayout>

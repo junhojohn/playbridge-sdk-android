@@ -2,6 +2,7 @@ package kr.co.playbridge.sdk.sample
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -30,7 +31,6 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        var mainLayout = findViewById<ConstraintLayout>(R.id.main)
 
         PlayBridgeLogUtil.setLogLevel(PlayBridgeLogUtil.Companion.LogLevel.Verbose)
         PlayBridgeLogUtil.d("debug")
@@ -39,45 +39,56 @@ class MainActivity : AppCompatActivity() {
         PlayBridgeLogUtil.i("info")
 
         playBridgeBannerView = PlayBridgeBannerView(this);
+        var mainLayout = findViewById<ConstraintLayout>(R.id.main)
         mainLayout.addView(playBridgeBannerView)
+
+        findViewById<Button>(R.id.btn_load).setOnClickListener {
+            playBridgeBannerView.load()
+            playBridgeBannerView.setPlayBridgeBannerViewListener(object : PlayBridgeBannerViewListener {
+                override fun onAdLoaded() {
+                    PlayBridgeLogUtil.d("onAdLoaded()")
+                }
+
+                override fun onAdLoadFailed(playBridgeError: PlayBridgeError) {
+                    PlayBridgeLogUtil.d("onAdLoadFailed(${playBridgeError.toString()})")
+                }
+
+                override fun onAdShowed() {
+                    PlayBridgeLogUtil.d("onAdShowed()")
+                }
+                override fun onAdShowFailed(playBridgeError: PlayBridgeError) {
+                    PlayBridgeLogUtil.d("onAdShowFailed(${playBridgeError.toString()})")
+                }
+
+                override fun onShowLandingScreen() {
+                    PlayBridgeLogUtil.d("onShowLandingScreen()")
+                }
+
+                override fun onCloseLandingScreen() {
+                    PlayBridgeLogUtil.d("onCloseLandingScreen()")
+                }
+
+                override fun onTimeout(playBridgeError: PlayBridgeError) {
+                    PlayBridgeLogUtil.d("onTimeout(${playBridgeError.toString()})")
+                }
+
+                override fun onClickAd() {
+                    TODO("Not yet implemented")
+                }
+
+            })
+        }
+        findViewById<Button>(R.id.btn_show).setOnClickListener {
+            playBridgeBannerView.show()
+        }
+        findViewById<Button>(R.id.btn_destroy).setOnClickListener {
+            playBridgeBannerView.destroy()
+        }
+
         PlayBridgeAds.init(this, object : PlayBridgeOnInitCompleteListener {
             override fun onComplete(status: PlayBridgeOnInitStatus?) {
                 PlayBridgeLogUtil.d("init finish with ${status?.statusCode} , ${status?.statusMessage} ")
-                playBridgeBannerView.load()
-                playBridgeBannerView.setPlayBridgeBannerViewListener(object : PlayBridgeBannerViewListener {
-                    override fun onAdLoaded() {
-                        PlayBridgeLogUtil.d("onAdLoaded()")
-                        playBridgeBannerView.show()
-                    }
 
-                    override fun onAdLoadFailed(playBridgeError: PlayBridgeError) {
-                        PlayBridgeLogUtil.d("onAdLoadFailed(${playBridgeError.toString()})")
-                    }
-
-                    override fun onAdShowed() {
-                        PlayBridgeLogUtil.d("onAdShowed()")
-                    }
-                    override fun onAdShowFailed(playBridgeError: PlayBridgeError) {
-                        PlayBridgeLogUtil.d("onAdShowFailed(${playBridgeError.toString()})")
-                    }
-
-                    override fun onShowLandingScreen() {
-                        PlayBridgeLogUtil.d("onShowLandingScreen()")
-                    }
-
-                    override fun onCloseLandingScreen() {
-                        PlayBridgeLogUtil.d("onCloseLandingScreen()")
-                    }
-
-                    override fun onTimeout(playBridgeError: PlayBridgeError) {
-                        PlayBridgeLogUtil.d("onTimeout(${playBridgeError.toString()})")
-                    }
-
-                    override fun onClickAd() {
-                        TODO("Not yet implemented")
-                    }
-
-                })
             }
         })
     }

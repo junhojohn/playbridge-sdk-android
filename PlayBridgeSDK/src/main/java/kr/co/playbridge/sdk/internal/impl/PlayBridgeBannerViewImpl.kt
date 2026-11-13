@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RelativeLayout
+import android.widget.TextView
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
@@ -24,10 +25,18 @@ internal class PlayBridgeBannerViewImpl(private val context: Context, private va
 
     private lateinit var playBridgeBannerViewListener: PlayBridgeBannerViewListener
 
+    private var cnt : Int = 0
+
+    private lateinit var tvCnt : TextView
+
+    init {
+        init()
+    }
 
     private fun init() {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val view: View? = inflater.inflate(R.layout.playbridge_banner_view, playBridgeBannerView, false)
+        tvCnt = view?.findViewById<TextView>(R.id.tv_cnt)!!
         playBridgeBannerView.addView(view)
         val layoutParams = RelativeLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
@@ -65,7 +74,7 @@ internal class PlayBridgeBannerViewImpl(private val context: Context, private va
     fun show() {
         PlayBridgeLogUtil.d("show()")
         try {
-            init()
+            tvCnt.text = "${++cnt}"
             playBridgeBannerViewListener.onAdShowed()
         }catch (ex : Exception) {
             PlayBridgeLogUtil.e("Internal error occurred.", ex)
@@ -77,12 +86,17 @@ internal class PlayBridgeBannerViewImpl(private val context: Context, private va
         playBridgeBannerViewListener = _playBridgeBannerViewListener
     }
 
+    private var isDestroyed = false
+
     fun destroy() {
+        if (isDestroyed) return     // 버튼 + onDestroy 등 중복 호출 방지
+        isDestroyed = true
         PlayBridgeLogUtil.d("destroy()")
         if (::adViewModel.isInitialized) adViewModel.disposeAll()
 
+        playBridgeBannerView.removeOnLayoutChangeListener(this)
         playBridgeBannerView.removeAllViews()
-        playBridgeBannerView.destroy()
+        // playBridgeBannerView.destroy()는 다시 impl.destroy()를 호출하므로 여기서 부르면 무한 재귀 발생
     }
 
     override fun onLayoutChange(
