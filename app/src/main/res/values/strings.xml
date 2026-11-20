@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">playbridge-sdk-android-main</string>
+    <string name="admob_app_id">ca-app-pub-2626235926542867~4895401558</string>
 </resources>

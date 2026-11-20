@@ -27,3 +27,4 @@ rootProject.name = "playbridge-sdk-android"
 include ':app'
 include ':CommonSDK'
 include ':PlayBridgeSDK'
+include ':AdmobAdapterSDK'

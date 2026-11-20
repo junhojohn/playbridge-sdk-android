@@ -28,7 +28,7 @@ ext.sdkVersionPatch = (gradleProperties["sdkVersionPatch"] ?: "0")
 ext.sdkVersionCode = Integer.valueOf((Integer.parseInt(sdkVersionMajor)*10000) + (Integer.parseInt(sdkVersionMinor)*100) + Integer.parseInt(sdkVersionPatch))
 ext.sdkVersion = "${sdkVersionMajor}.${sdkVersionMinor}.${sdkVersionPatch}"
 
-ext.sdkArtifactId = "playbridge-sdk"
+ext.sdkArtifactId = "core-sdk"
 ext.gitPagesMavenRepoName = "playbridge-sdk-android-maven"
 def githubUsername = project.findProperty("githubUsername") ?: localProperties["githubUsername"]
 def githubToken    = project.findProperty("githubToken")    ?: localProperties["githubToken"]
@@ -121,13 +121,13 @@ afterEvaluate {
         publications {
             realRelease(MavenPublication) {
                 from components.realRelease
-                groupId = 'kr.co.playbridge.sdk'
+                groupId = 'kr.co.playbridge'
                 artifactId = "${sdkArtifactId}"
                 version = "${sdkVersion}"
             }
             uatDebug(MavenPublication) {
                 from components.uatDebug
-                groupId = 'kr.co.playbridge.sdk'
+                groupId = 'kr.co.playbridge'
                 artifactId = "${sdkArtifactId}-uat"
                 version = "${sdkVersion}"
             }
@@ -192,9 +192,9 @@ afterEvaluate {
 
                 def isUat = variant.toLowerCase().contains('uat')
                 def artifactBase = "${sdkArtifactId}" + (isUat ? "-uat" : "")
-                def localRepo = file("${buildDir}/repo/kr/co/playbridge/sdk/${artifactBase}/${sdkVersion}")
+                def localRepo = file("${buildDir}/repo/kr/co/playbridge/${artifactBase}/${sdkVersion}")
                 def repoRoot = file("../../" + "${gitPagesMavenRepoName}")
-                def destRoot = file("${repoRoot}/maven-repo/kr/co/playbridge/sdk/${artifactBase}/${sdkVersion}")
+                def destRoot = file("${repoRoot}/maven-repo/kr/co/playbridge/${artifactBase}/${sdkVersion}")
 
                 if (!localRepo.exists()) {
                     println "산출물 경로가 존재하지 않습니다: ${localRepo}"
@@ -240,7 +240,7 @@ afterEvaluate {
                 copy { from localRepo; into destRoot }
                 println "복사 완료: ${variant} ${sdkVersion}"
 
-                def relPath = "maven-repo/kr/co/playbridge/sdk/${artifactBase}/${sdkVersion}"
+                def relPath = "maven-repo/kr/co/playbridge/${artifactBase}/${sdkVersion}"
                 runGit(["add","-A", relPath], repoRoot)
                 def status = runGitCapture(["status","--porcelain"], repoRoot)
                 if (!status) {
@@ -291,14 +291,14 @@ afterEvaluate {
 dependencies {
     if (useLocalProject) {
         println "▶ useLocalProject(coreSdk): ${useLocalProject}"
-        // ADwhale Core SDK 2.7.10
+        // PlayBridge Core SDK
         // 개발 중에는 publication 혼동 없이 그냥 project() 하나만 사용
         implementation project(':CommonSDK')
     } else {
         println "▶ useLocalProject(coreSdk): ${useLocalProject}"
         // 배포용: flavor별로 구분된 외부 의존성
-        realImplementation "kr.co.playbridge.sdk:playbridge-common-sdk:$sdkVersion"
-        uatImplementation  "kr.co.playbridge.sdk:playbridge-common-sdk-uat:$sdkVersion"
+        realImplementation "kr.co.playbridge:common-sdk:$sdkVersion"
+        uatImplementation  "kr.co.playbridge:common-sdk-uat:$sdkVersion"
     }
 
     implementation libs.androidx.core.ktx

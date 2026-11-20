@@ -5,7 +5,7 @@ import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import kr.co.playbridge.commonsdk.internal.repository.AdIdRepository
+import kr.co.playbridge.commonsdk.internal.repositories.AdIdRepository
 
 class DeviceInfoViewModel : ViewModel() {
     private val deviceInfo : MutableLiveData<String> = MutableLiveData()

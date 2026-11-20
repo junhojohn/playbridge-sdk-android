@@ -113,6 +113,8 @@ android {
 
 dependencies {
     implementation project(":PlayBridgeSDK")
+    implementation project(":CommonSDK")
+    implementation project(":AdmobAdapterSDK")
     implementation libs.androidx.core.ktx
     implementation libs.androidx.appcompat
     implementation libs.material

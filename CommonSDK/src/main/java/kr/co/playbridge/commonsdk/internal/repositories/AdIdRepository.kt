@@ -1,4 +1,4 @@
-package kr.co.playbridge.commonsdk.internal.repository
+package kr.co.playbridge.commonsdk.internal.repositories
 
 import android.content.Context
 import com.google.android.gms.ads.identifier.AdvertisingIdClient

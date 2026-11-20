@@ -1,0 +1,315 @@
+plugins {
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.maven.publish)
+}
+
+Properties gradleProperties = new Properties()
+def gp = project.rootProject.file('gradle.properties')
+if (!gp.exists()) {
+    // qa-app-shell에서 루트에 gradle.properties가 없을 수 있으므로 상위 폴더를 FallBack
+    gp = new File(project.rootProject.projectDir, '../gradle.properties')
+}
+if (gp.exists()) {
+    gradleProperties.load(gp.newDataInputStream())
+}
+Properties localProperties = new Properties()
+def lp = project.rootProject.file('local.Properties')
+if (!lp.exists()) {
+    // qa-app-shell에서 루트에 local.properties가 없을 수 있으므로 상위 폴더를 FallBack
+    lp = new File(project.rootProject.projectDir, '../local.properties')
+}
+if (lp.exists()) {
+    localProperties.load(lp.newDataInputStream())
+}
+ext.sdkVersionMajor = (gradleProperties["admobVersionMajor"] ?: "1")
+ext.sdkVersionMinor = (gradleProperties["admobVersionMinor"] ?: "0")
+ext.sdkVersionPatch = (gradleProperties["admobVersionPatch"] ?: "0")
+ext.sdkVersionTrivial = (gradleProperties["admobVersionTrivial"] ?: "0")
+ext.sdkVersionCode = Integer.valueOf(((Integer.parseInt(sdkVersionMajor)*1000000) + (Integer.parseInt(sdkVersionMinor)*10000) + (Integer.parseInt(sdkVersionPatch)*100) + Integer.valueOf(sdkVersionTrivial)))
+ext.sdkVersion = "${sdkVersionMajor}.${sdkVersionMinor}.${sdkVersionPatch}.${sdkVersionTrivial}"
+ext.originalSdkVersion = "${sdkVersionMajor}.${sdkVersionMinor}.${sdkVersionPatch}"
+
+ext.sdkArtifactId = "admob-adapter-sdk"
+ext.gitPagesMavenRepoName = "playbridge-sdk-android-maven"
+def githubUsername = project.findProperty("githubUsername") ?: localProperties["githubUsername"]
+def githubToken    = project.findProperty("githubToken")    ?: localProperties["githubToken"]
+def useLocalProjectRaw = project.findProperty('useLocalProject') ?: localProperties["useLocalProject"]
+ext.useLocalProject = ['true'].contains(useLocalProjectRaw.toLowerCase())
+
+android {
+    namespace 'kr.co.playbridge.admob.adapter'
+    compileSdk 36
+
+    flavorDimensions "default"
+
+    //"Build Type 'release' contains custom BuildConfig fields, but the feature is disabled. 에러 해결을 위한 임시방편
+    //참고: https://daryeou.tistory.com/324
+    buildFeatures {
+        buildConfig = true
+    }
+
+    productFlavors {
+        real {
+            dimension "default"
+            minSdk 25
+            targetSdk 36
+            versionCode sdkVersionCode
+            versionName "${sdkVersion}"
+            multiDexEnabled true
+            testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+            consumerProguardFiles "consumer-rules.pro"
+            buildConfigField "String", "PLAYBRIDGE_ADMOB_ADAPER_SDK_VERSION", "\"${sdkVersion}\""
+        }
+
+        uat {
+            dimension "default"
+            minSdk 25
+            targetSdk 36
+            versionCode sdkVersionCode
+            versionName "${sdkVersion}"
+            multiDexEnabled false
+            testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+            consumerProguardFiles "consumer-rules.pro"
+            buildConfigField "String", "PLAYBRIDGE_ADMOB_ADAPER_SDK_VERSION", "\"${sdkVersion}\""
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules-debug.pro'
+        }
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+    }
+    defaultConfig {
+        minSdk 25
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    // AGP 8.0+: variant 컴포넌트를 Maven publish에 노출하려면 명시 선언 필요
+    publishing {
+        singleVariant("realRelease")
+        singleVariant("uatDebug")
+    }
+}
+
+// gradle :AdmobadapterSDK:publishRealReleasePublicationToCustomMavenRepoRepository
+// gradle :AdmobadapterSDK:publishUatDebugPublicationToCustomMavenRepoRepository
+// gradle :AdmobadapterSDK:deployAllToGitHubPages
+// gradle :AdmobadapterSDK:publishAllPublicationsToGithubPackagesRepository
+// gradle :AdmobadapterSDK:publishAllPublicationsToCustomMavenRepoRepository
+afterEvaluate {
+    publishing {
+        publications {
+            realRelease(MavenPublication) {
+                from components.realRelease
+                groupId = 'kr.co.playbridge'
+                artifactId = "${sdkArtifactId}"
+                version = "${sdkVersion}"
+            }
+            uatDebug(MavenPublication) {
+                from components.uatDebug
+                groupId = 'kr.co.playbridge'
+                artifactId = "${sdkArtifactId}-uat"
+                version = "${sdkVersion}"
+            }
+        }
+        repositories {
+            maven {
+                name = 'CustomMavenRepo'
+                url = "file://${buildDir}/repo"
+            }
+        }
+    }
+
+    // github pages에 배포하기 위한 스크립트 시작
+    ext.variantToPublishTask = [
+            "realRelease": "publishRealReleasePublicationToCustomMavenRepoRepository",
+            "uatDebug": "publishUatDebugPublicationToCustomMavenRepoRepository"
+    ]
+
+    def runGit = { List<String> args, File workDir, boolean ignoreFail = false ->
+        def result = project.exec {
+            workingDir workDir
+            commandLine(["git"] + args)
+            ignoreExitValue = ignoreFail
+        }
+        if (!ignoreFail && result.exitValue != 0) {
+            throw new GradleException("git ${args.join(' ')} failed with exit ${result.exitValue}")
+        }
+    }
+
+    def runGitCapture = { List<String> args, File workDir, boolean ignoreFail = false ->
+        def out = new ByteArrayOutputStream()
+        def err = new ByteArrayOutputStream()
+        def result = project.exec {
+            workingDir workDir
+            commandLine(["git"] + args)
+            standardOutput = out
+            errorOutput = err
+            ignoreExitValue = ignoreFail
+        }
+        if (!ignoreFail && result.exitValue != 0) {
+            throw new GradleException("git ${args.join(' ')} failed: ${err.toString('UTF-8').trim()}")
+        }
+        return out.toString("UTF-8").trim()
+    }
+
+    ext.variantsToDeploy = variantToPublishTask.findAll { entry ->
+        tasks.findByName(entry.value) != null
+    }.keySet().toList()
+
+    ext.deployToGitHubPages = { variant ->
+        def publicationTask = variantToPublishTask[variant]
+        if (!publicationTask) return
+
+        tasks.create(name: "buildAndDeploy${variant.capitalize()}ToGitHubPages") {
+            group = "maven"
+            description = "Publish ${variant} → copy to ${gitPagesMavenRepoName} → commit & push(main)"
+            dependsOn publicationTask
+            doLast {
+                if (!githubUsername || !githubToken) {
+                    throw new GradleException("GitHub 자격정보(githubUsername/githubToken)가 없습니다. local.properties 또는 -P, env로 제공하세요.")
+                }
+
+                def isUat = variant.toLowerCase().contains('uat')
+                def artifactBase = "${sdkArtifactId}" + (isUat ? "-uat" : "")
+                def localRepo = file("${buildDir}/repo/kr/co/playbridge/${artifactBase}/${sdkVersion}")
+                def repoRoot = file("../../" + "${gitPagesMavenRepoName}")
+                def destRoot = file("${repoRoot}/maven-repo/kr/co/playbridge/${artifactBase}/${sdkVersion}")
+
+                if (!localRepo.exists()) {
+                    println "산출물 경로가 존재하지 않습니다: ${localRepo}"
+                    return
+                }
+                if (!repoRoot.exists()) {
+                    throw new GradleException("${gitPagesMavenRepoName} 폴더가 존재하지 않습니다: ${repoRoot}")
+                }
+                if (!new File(repoRoot, ".git").exists()) {
+                    throw new GradleException("${gitPagesMavenRepoName} 폴더는 Git 저장소가 아닙니다: ${new File(repoRoot, '.git')}")
+                }
+
+                def originUrl = runGitCapture(["remote", "get-url", "origin"], repoRoot)
+                def authedUrl = originUrl.replaceFirst(
+                        /^https?:\/\/github\.com\//,
+                        "https://${githubUsername}:${githubToken}@github.com/"
+                )
+
+                // 브랜치 고정: main
+                def currentBranch = runGitCapture(["rev-parse", "--abbrev-ref", "HEAD"], repoRoot, true)
+                if (currentBranch != "main") {
+                    if (runGitCapture(["show-ref","--verify","--quiet","refs/heads/main"], repoRoot, true).isEmpty()) {
+                        runGit(["checkout","-B","main"], repoRoot) // 로컬 main 생성
+                    } else {
+                        runGit(["checkout","main"], repoRoot)
+                    }
+                }
+
+                runGit(["fetch", authedUrl, "main"], repoRoot)
+                runGit([
+                        "-c","credential.helper=",
+                        "-c","http.version=HTTP/1.1",
+                        "-c","http.postBuffer=524288000",
+                        "reset","--hard","FETCH_HEAD"
+                ], repoRoot)
+
+                runGit(["clean", "-fdx"], repoRoot)
+
+                if (destRoot.exists()) {
+                    destRoot.deleteDir()
+                    println "기존 버전 폴더 삭제: ${destRoot}"
+                }
+                copy { from localRepo; into destRoot }
+                println "복사 완료: ${variant} ${sdkVersion}"
+
+                def relPath = "maven-repo/kr/co/playbridge/${artifactBase}/${sdkVersion}"
+                runGit(["add","-A", relPath], repoRoot)
+                def status = runGitCapture(["status","--porcelain"], repoRoot)
+                if (!status) {
+                    println "변경된 파일이 없습니다. commit & push 생략."
+                    return
+                }
+
+                try {
+                    def email = runGitCapture(["config","user.email"], repoRoot, true)
+                    def name  = runGitCapture(["config","user.name"], repoRoot, true)
+                    if (!email) runGit(["config","user.email","ci@local"], repoRoot)
+                    if (!name)  runGit(["config","user.name","${sdkArtifactId} CI"], repoRoot)
+                } catch (ignored) {}
+
+                def ts = new Date().format("yyyy-MM-dd HH:mm z", TimeZone.getTimeZone("Asia/Seoul"))
+                def msg = "[${sdkArtifactId}] ${artifactBase} ${sdkVersion} (${variant}) @ ${ts}"
+
+                runGit(["commit","-m", msg], repoRoot)
+
+                runGit([
+                        "-c","credential.helper=",
+                        "-c","http.version=HTTP/1.1",
+                        "-c","http.postBuffer=524288000",
+                        "push", authedUrl, "HEAD:main"
+                ], repoRoot)
+
+                println "GitHub Pages 커밋 & 푸시 완료: ${msg}"
+            }
+        }
+    }
+
+    ext.variantsToDeploy.each { variant ->
+        deployToGitHubPages(variant)
+    }
+
+    // 전체 배포 태스크
+    tasks.register("deployAllToGitHubPages") {
+        group = "maven"
+        description = "모든 flavor 배포 실행(퍼블리시→복사→커밋&푸시 to main)"
+        dependsOn variantsToDeploy.collect { "buildAndDeploy${it.capitalize()}ToGitHubPages" }
+        doFirst {
+            println "▶ 모든 flavor 배포 실행: ${variantsToDeploy}"
+        }
+    }
+    // github pages에 배포하기 위한 스크립트 끝
+}
+
+dependencies {
+    if (useLocalProject) {
+        println "▶ useLocalProject(coreSdk): ${useLocalProject}"
+        // PlayBridge Core SDK
+        // 개발 중에는 publication 혼동 없이 그냥 project() 하나만 사용
+        implementation project(':CommonSDK')
+    } else {
+        println "▶ useLocalProject(coreSdk): ${useLocalProject}"
+        // 배포용: flavor별로 구분된 외부 의존성
+        realImplementation "kr.co.playbridge:common-sdk:$sdkVersion"
+        uatImplementation  "kr.co.playbridge:common-sdk-uat:$sdkVersion"
+    }
+
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.appcompat
+    implementation libs.material
+    implementation libs.androidx.constraintlayout
+
+    // Admob SDK 24.3.0
+    implementation("com.google.android.gms:play-services-ads:$originalSdkVersion")
+
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.junit
+    androidTestImplementation libs.androidx.espresso.core
+}

@@ -59,4 +59,11 @@
 -keep public class kr.co.playbridge.commonsdk.api.** {
     public *;
 }
+-keep public class kr.co.playbridge.commonsdk.internal.dto.** {
+    public *;
+}
+-keep public interface kr.co.playbridge.commonsdk.internal.interfaces.** {
+    public *;
+}
+
 #================== Common SDK Proguard for Release 적용 코드 끝 ==================

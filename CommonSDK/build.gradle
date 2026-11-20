@@ -28,7 +28,7 @@ ext.sdkVersionPatch = (gradleProperties["sdkVersionPatch"] ?: "0")
 ext.sdkVersionCode = Integer.valueOf((Integer.parseInt(sdkVersionMajor)*10000) + (Integer.parseInt(sdkVersionMinor)*100) + Integer.parseInt(sdkVersionPatch))
 ext.sdkVersion = "${sdkVersionMajor}.${sdkVersionMinor}.${sdkVersionPatch}"
 
-ext.sdkArtifactId = "playbridge-common-sdk"
+ext.sdkArtifactId = "common-sdk"
 ext.gitPagesMavenRepoName = "playbridge-sdk-android-maven"
 def githubUsername = project.findProperty("githubUsername") ?: localProperties["githubUsername"]
 def githubToken    = project.findProperty("githubToken")    ?: localProperties["githubToken"]
@@ -121,13 +121,13 @@ afterEvaluate {
         publications {
             realRelease(MavenPublication) {
                 from components.realRelease
-                groupId = 'kr.co.playbridge.sdk'
+                groupId = 'kr.co.playbridge'
                 artifactId = "${sdkArtifactId}"
                 version = "${sdkVersion}"
             }
             uatDebug(MavenPublication) {
                 from components.uatDebug
-                groupId = 'kr.co.playbridge.sdk'
+                groupId = 'kr.co.playbridge'
                 artifactId = "${sdkArtifactId}-uat"
                 version = "${sdkVersion}"
             }
@@ -192,9 +192,9 @@ afterEvaluate {
 
                 def isUat = variant.toLowerCase().contains('uat')
                 def artifactBase = "${sdkArtifactId}" + (isUat ? "-uat" : "")
-                def localRepo = file("${buildDir}/repo/kr/co/playbridge/sdk/${artifactBase}/${sdkVersion}")
+                def localRepo = file("${buildDir}/repo/kr/co/playbridge/${artifactBase}/${sdkVersion}")
                 def repoRoot = file("../../" + "${gitPagesMavenRepoName}")
-                def destRoot = file("${repoRoot}/maven-repo/kr/co/playbridge/sdk/${artifactBase}/${sdkVersion}")
+                def destRoot = file("${repoRoot}/maven-repo/kr/co/playbridge/${artifactBase}/${sdkVersion}")
 
                 if (!localRepo.exists()) {
                     println "산출물 경로가 존재하지 않습니다: ${localRepo}"
@@ -240,7 +240,7 @@ afterEvaluate {
                 copy { from localRepo; into destRoot }
                 println "복사 완료: ${variant} ${sdkVersion}"
 
-                def relPath = "maven-repo/kr/co/playbridge/sdk/${artifactBase}/${sdkVersion}"
+                def relPath = "maven-repo/kr/co/playbridge/${artifactBase}/${sdkVersion}"
                 runGit(["add","-A", relPath], repoRoot)
                 def status = runGitCapture(["status","--porcelain"], repoRoot)
                 if (!status) {

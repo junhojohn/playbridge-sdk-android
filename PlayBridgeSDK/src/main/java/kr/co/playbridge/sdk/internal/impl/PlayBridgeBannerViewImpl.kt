@@ -1,6 +1,7 @@
 package kr.co.playbridge.sdk.internal.impl
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
@@ -10,13 +11,20 @@ import android.widget.TextView
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
+import kr.co.playbridge.commonsdk.api.IOnInitCompleteListener
+import kr.co.playbridge.commonsdk.api.IOnInitStatus
+import kr.co.playbridge.commonsdk.api.utils.LogUtil
+import kr.co.playbridge.commonsdk.internal.dto.AdErrorTypeSpec
+import kr.co.playbridge.commonsdk.internal.dto.AdRequestInfo
+import kr.co.playbridge.commonsdk.internal.interfaces.IAdLoader
+import kr.co.playbridge.commonsdk.internal.interfaces.IAdLoaderListener
 import kr.co.playbridge.sdk.R
 import kr.co.playbridge.sdk.ads.PlayBridgeBannerView
 import kr.co.playbridge.sdk.ads.PlayBridgeBannerViewListener
 import kr.co.playbridge.sdk.ads.PlayBridgeError
 import kr.co.playbridge.sdk.ads.PlayBridgeLogUtil
 import kr.co.playbridge.sdk.internal.viewmodels.AdViewModel
-import java.lang.Exception
+import org.json.JSONObject
 
 @SuppressLint("ViewConstructor")
 internal class PlayBridgeBannerViewImpl(private val context: Context, private val playBridgeBannerView: PlayBridgeBannerView) : View.OnLayoutChangeListener{
@@ -33,6 +41,52 @@ internal class PlayBridgeBannerViewImpl(private val context: Context, private va
         init()
     }
 
+    private val bridgeListener = object : IAdLoaderListener {
+        override fun onLoadAdSuccess() {
+            playBridgeBannerViewListener.onAdLoaded()
+        }
+
+        override fun onLoadAdFailed(adErrorTypeSpec: AdErrorTypeSpec) {
+            playBridgeBannerViewListener.onAdLoadFailed(PlayBridgeError.from(adErrorTypeSpec))
+        }
+
+        override fun onLoadAdDiagnostics(adResponseInfo: JSONObject) {
+            LogUtil.e(adResponseInfo.toString())
+        }
+
+        override fun onShowAdSuccess() {
+            playBridgeBannerViewListener.onAdShowed()
+        }
+
+        override fun onShowAdFailed(adErrorTypeSpec: AdErrorTypeSpec) {
+            playBridgeBannerViewListener.onAdShowFailed(PlayBridgeError.from(adErrorTypeSpec))
+        }
+
+        override fun onClickAd() {
+            playBridgeBannerViewListener.onClickAd()
+        }
+
+        override fun onCloseAd() {
+            playBridgeBannerViewListener.onCloseLandingScreen()
+        }
+
+        override fun onTimeoutAd(adErrorTypeSpec: AdErrorTypeSpec) {
+            playBridgeBannerViewListener.onTimeout(PlayBridgeError.from(adErrorTypeSpec))
+        }
+
+        override fun onUserRewarded(
+            rewardType: String,
+            rewardAmount: Int,
+            extension: Map<String, Any>
+        ) {
+            TODO("Not yet implemented")
+        }
+
+        override fun extension(extension: Map<String, Any>) {
+            TODO("Not yet implemented")
+        }
+
+    }
     private fun init() {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val view: View? = inflater.inflate(R.layout.playbridge_banner_view, playBridgeBannerView, false)
@@ -63,12 +117,26 @@ internal class PlayBridgeBannerViewImpl(private val context: Context, private va
         adViewModel.configDtoState.observe(context as LifecycleOwner) { configDto ->
             PlayBridgeLogUtil.d( configDto.toString())
 
-            if(configDto.mediaId.isEmpty() || configDto.placementUid.isEmpty()) {
-                playBridgeBannerViewListener.onAdLoadFailed(PlayBridgeError.ERROR_100)
-            }else{
-                playBridgeBannerViewListener.onAdLoaded()
-            }
+            loadAdmobBanner()
+//            if(configDto.mediaId.isEmpty() || configDto.placementUid.isEmpty()) {
+//                playBridgeBannerViewListener.onAdLoadFailed(PlayBridgeError.ERROR_100)
+//            }else{
+//                playBridgeBannerViewListener.onAdLoaded()
+//            }
         }
+    }
+
+    private fun loadAdmobBanner() {
+        val clazz = Class.forName("kr.co.playbridge.admob.adapter.api.AdmobBannerViewLoader")
+        val admobBannerViewLoader = clazz.newInstance() as IAdLoader
+        admobBannerViewLoader.init(
+            context, object : IOnInitCompleteListener {
+                override fun onComplete(status: IOnInitStatus?) {
+                    LogUtil.e("${status?.statusCode} & ${status?.statusMessage}")
+                    admobBannerViewLoader.load(context as Activity, bridgeListener, AdRequestInfo())
+                }
+
+            }, AdRequestInfo())
     }
 
     fun show() {
