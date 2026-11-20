@@ -30,6 +30,12 @@ ext.sdkVersionCode = Integer.valueOf(((Integer.parseInt(sdkVersionMajor)*1000000
 ext.sdkVersion = "${sdkVersionMajor}.${sdkVersionMinor}.${sdkVersionPatch}.${sdkVersionTrivial}"
 ext.originalSdkVersion = "${sdkVersionMajor}.${sdkVersionMinor}.${sdkVersionPatch}"
 
+ext.commonSdkVersionMajor = (gradleProperties["sdkVersionMajor"] ?: "1")
+ext.commonSdkVersionMinor = (gradleProperties["sdkVersionMinor"] ?: "0")
+ext.commonSdkVersionPatch = (gradleProperties["sdkVersionPatch"] ?: "0")
+ext.commonSdkVersionCode = Integer.valueOf((Integer.parseInt(commonSdkVersionMajor)*10000) + (Integer.parseInt(commonSdkVersionMinor)*100) + commonSdkVersionPatch)
+ext.commonSdkVersion = "${commonSdkVersionMajor}.${commonSdkVersionMinor}.${commonSdkVersionPatch}"
+
 ext.sdkArtifactId = "admob-adapter-sdk"
 ext.gitPagesMavenRepoName = "playbridge-sdk-android-maven"
 def githubUsername = project.findProperty("githubUsername") ?: localProperties["githubUsername"]
@@ -297,8 +303,8 @@ dependencies {
     } else {
         println "▶ useLocalProject(coreSdk): ${useLocalProject}"
         // 배포용: flavor별로 구분된 외부 의존성
-        realImplementation "kr.co.playbridge:common-sdk:$sdkVersion"
-        uatImplementation  "kr.co.playbridge:common-sdk-uat:$sdkVersion"
+        realImplementation "kr.co.playbridge:common-sdk:$commonSdkVersion"
+        uatImplementation  "kr.co.playbridge:common-sdk-uat:$commonSdkVersion"
     }
 
     implementation libs.androidx.core.ktx
